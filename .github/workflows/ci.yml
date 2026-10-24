@@ -1,0 +1,11 @@
+# A check that finishes in seconds, so a rehearsal's CI waits are real but short.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: "true"
