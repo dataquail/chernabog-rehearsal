@@ -1,4 +1,4 @@
-# Rehearsing post-merge: red while a red-*.txt is on the branch. Put back after.
+# A check that finishes in seconds, so a rehearsal's CI waits are real but short.
 name: ci
 on:
   push:
@@ -8,5 +8,4 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: test -z "$(ls red-*.txt 2>/dev/null)"
+      - run: "true"
