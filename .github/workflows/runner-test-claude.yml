@@ -54,6 +54,7 @@ jobs:
           sleep 20; echo "=== pane at 20s ==="; tmux capture-pane -p -t bogus | grep -v '^\s*$' || echo "session gone"
           tmux kill-session -t bogus || true
           ls -R ~/.claude/projects 2>/dev/null || echo "no transcript"
+          mkdir -p /tmp/saved && cp -r ~/.claude/projects /tmp/saved/ || true
       - name: interactive claude, invalid token, fresh home
         env:
           CLAUDE_CODE_OAUTH_TOKEN: sk-ant-oat01-not-a-real-token
@@ -97,6 +98,7 @@ jobs:
         with:
           name: claude-home
           path: |
+            /tmp/saved
             ~/.claude/projects
           if-no-files-found: warn
           include-hidden-files: true
