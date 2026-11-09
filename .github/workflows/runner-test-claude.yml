@@ -35,6 +35,34 @@ jobs:
           for t in 5 15 30; do sleep $(( t == 5 ? 5 : t == 15 ? 10 : 15 )); echo "=== pane at ${t}s ==="; tmux capture-pane -p -t notoken || echo "session gone"; done
           tmux kill-session -t notoken || true
           ls -la ~/.claude ~/.claude.json 2>/dev/null || true
+      - name: interactive claude, onboarding seeded, no token
+        run: |
+          rm -rf ~/.claude ~/.claude.json
+          mkdir -p /tmp/w3 && cd /tmp/w3 && git init -q
+          echo '{"hasCompletedOnboarding":true,"theme":"dark","projects":{"/tmp/w3":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
+          tmux new-session -d -s seeded -x 200 -y 50 -c /tmp/w3 claude
+          sleep 10; echo "=== pane at 10s ==="; tmux capture-pane -p -t seeded | grep -v '^\s*$' || echo "session gone"
+          tmux kill-session -t seeded || true
+      - name: interactive claude, onboarding seeded, invalid token
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: sk-ant-oat01-not-a-real-token
+        run: |
+          rm -rf ~/.claude
+          echo '{"hasCompletedOnboarding":true,"theme":"dark","projects":{"/tmp/w3":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
+          cd /tmp/w3
+          tmux new-session -d -s bogus -x 200 -y 50 -c /tmp/w3 -e CLAUDE_CODE_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN" "claude 'Reply with OK.'"
+          sleep 20; echo "=== pane at 20s ==="; tmux capture-pane -p -t bogus | grep -v '^\s*$' || echo "session gone"
+          tmux kill-session -t bogus || true
+          ls -R ~/.claude/projects 2>/dev/null || echo "no transcript"
+      - name: interactive claude, invalid token, fresh home
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: sk-ant-oat01-not-a-real-token
+        run: |
+          rm -rf ~/.claude ~/.claude.json
+          cd /tmp/w3
+          tmux new-session -d -s fresh -x 200 -y 50 -c /tmp/w3 -e CLAUDE_CODE_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN" "claude 'Reply with OK.'"
+          sleep 10; echo "=== pane at 10s ==="; tmux capture-pane -p -t fresh | grep -v '^\s*$' | tail -30 || echo "session gone"
+          tmux kill-session -t fresh || true
       - name: usage endpoint with the token
         if: env.HAS_TOKEN == 'true'
         env:
@@ -48,7 +76,8 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          rm -rf ~/.claude ~/.claude.json
+          rm -rf ~/.claude
+          echo '{"hasCompletedOnboarding":true,"theme":"dark","projects":{"/tmp/w2":{"hasTrustDialogAccepted":true}}}' > ~/.claude.json
           mkdir -p /tmp/w2/.claude && cd /tmp/w2 && git init -q
           cat > .claude/settings.json <<'JSON'
           {"hooks":{"Stop":[{"hooks":[{"type":"command","command":"touch /tmp/stopped; tmux kill-session -t tok"}]}]}}
