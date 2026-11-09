@@ -1,0 +1,73 @@
+# chernabog#456: interactive claude under tmux on a hosted runner. Temporary.
+name: runner-test-claude
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+    steps:
+      - name: runner
+        run: |
+          nproc; free -m; df -h / | tail -1
+          echo "tmux: $(command -v tmux || echo missing)"; tmux -V || true
+          node --version; npm --version; echo "TERM=$TERM"; locale || true
+          echo "ANTHROPIC_API_KEY set: ${ANTHROPIC_API_KEY:+yes}"
+          echo "HAS_TOKEN=$HAS_TOKEN"
+      - name: install claude
+        run: |
+          start=$(date +%s)
+          npm install -g @anthropic-ai/claude-code >/dev/null 2>&1
+          echo "install seconds: $(( $(date +%s) - start ))"
+          claude --version
+          ls -la ~/.claude 2>/dev/null || echo "no ~/.claude"
+      - name: usage endpoint without a token
+        run: |
+          curl -s -o /tmp/u.json -w '%{http_code}\n' https://api.anthropic.com/api/oauth/usage \
+            -H 'anthropic-beta: oauth-2025-04-20'; head -c 300 /tmp/u.json; echo
+      - name: interactive claude, no token, fresh home
+        run: |
+          mkdir -p /tmp/work && cd /tmp/work && git init -q
+          tmux new-session -d -s notoken -x 200 -y 50 -c /tmp/work claude
+          for t in 5 15 30; do sleep $(( t == 5 ? 5 : t == 15 ? 10 : 15 )); echo "=== pane at ${t}s ==="; tmux capture-pane -p -t notoken || echo "session gone"; done
+          tmux kill-session -t notoken || true
+          ls -la ~/.claude ~/.claude.json 2>/dev/null || true
+      - name: usage endpoint with the token
+        if: env.HAS_TOKEN == 'true'
+        env:
+          T: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          curl -s -o /tmp/u.json -w '%{http_code}\n' https://api.anthropic.com/api/oauth/usage \
+            -H 'anthropic-beta: oauth-2025-04-20' -H "Authorization: Bearer $T"
+          jq '{five_hour, seven_day}' /tmp/u.json || head -c 300 /tmp/u.json
+      - name: interactive claude, token only, Stop hook
+        if: env.HAS_TOKEN == 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          rm -rf ~/.claude ~/.claude.json
+          mkdir -p /tmp/w2/.claude && cd /tmp/w2 && git init -q
+          cat > .claude/settings.json <<'JSON'
+          {"hooks":{"Stop":[{"hooks":[{"type":"command","command":"touch /tmp/stopped; tmux kill-session -t tok"}]}]}}
+          JSON
+          tmux new-session -d -s tok -x 200 -y 50 -c /tmp/w2 -e CLAUDE_CODE_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN" \
+            "claude 'Reply with the word OK and nothing else.'"
+          for i in $(seq 1 24); do
+            sleep 5
+            if [ -f /tmp/stopped ]; then echo "Stop hook ran after $((i*5))s"; break; fi
+            echo "=== pane at $((i*5))s ==="; tmux capture-pane -p -t tok | tail -25 || break
+          done
+          tmux has-session -t tok 2>/dev/null && { echo "still running"; tmux capture-pane -p -t tok; tmux kill-session -t tok; }
+          ls -R ~/.claude/projects || true
+      - name: save the transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-home
+          path: |
+            ~/.claude/projects
+          if-no-files-found: warn
+          include-hidden-files: true
