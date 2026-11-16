@@ -94,16 +94,20 @@ settings:
 #   parkedLeaseTtl: 3 days
 #   leaseRenewEvery: 30 minutes
 
-# Both run on GitHub Actions as CHERNABOG_TOKEN's login (zacharyweidenbach), but review
-# only takes pull requests that ask that login, and implement asks data-quail.
-# review is in ci.flows so a phase announcement wakes the workflow; the review
-# itself runs on a daemon as data-quail: CI acts as one login (chernabog#465).
+# implement and address-review run on GitHub Actions as CHERNABOG_TOKEN's login
+# (zacharyweidenbach), the author; review runs on a daemon as data-quail, whom
+# implement asks: CI acts as one login (chernabog#465). Both CI flows end their
+# job while the pull request's CI runs, and a finished CI run starts the next
+# (chernabog#513); address-review reads phases, so data-quail's review
+# asking for changes wakes it through the phase announcement.
 flows:
   implement:
     from: "@chernabog/recipes/implement"
+  address-review:
+    from: "@chernabog/recipes/address-review"
   review:
     agents: { reviewer: claude }
     from: "@chernabog/recipes/review"
 
 ci:
-  flows: [implement, review]
+  flows: [implement, address-review]

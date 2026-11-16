@@ -4,21 +4,21 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "@chernabog/recipes": "0.5.0",
-        "@chernabog/sdk": "0.12.0",
+        "@chernabog/recipes": "0.6.0",
+        "@chernabog/sdk": "0.13.0",
       },
       "devDependencies": {
-        "@chernabog/core": "1.3.0",
+        "@chernabog/core": "1.4.0",
         "effect": "4.0.5",
       },
     },
   },
   "packages": {
-    "@chernabog/core": ["@chernabog/core@1.3.0", "", { "peerDependencies": { "effect": "4.0.5" } }, "sha512-SDE+5ndbiiqaxNzZ7b9nf2CqRATAdK/xVno2oCzsACG3tCnL40k1r+TP8CEefQIvjRjtDxS0M4tPtgv4YcWebQ=="],
+    "@chernabog/core": ["@chernabog/core@1.4.0", "", { "peerDependencies": { "effect": "4.0.5" } }, "sha512-hz60zQeV2kPxHv37d5yzT7eEWuUTXfvwsOEDPdlJqnOWIKda1b+e8RvG1Yds3UEJgEtHIkywaDHgVDr6rpwLTA=="],
 
-    "@chernabog/recipes": ["@chernabog/recipes@0.5.0", "", { "peerDependencies": { "@chernabog/core": "^1.1.0", "@chernabog/sdk": ">=0.12.0 <0.13.0" } }, "sha512-k/qTQL9hOfUA65ZQ3Uhz5rie1PjFbV4l/XH5ngYXM4OkbIN2DIdzAfh48AMgMZl9k6s2r5dmF1LIliKPenYEew=="],
+    "@chernabog/recipes": ["@chernabog/recipes@0.6.0", "", { "peerDependencies": { "@chernabog/core": "^1.1.0", "@chernabog/sdk": ">=0.13.0 <0.14.0" } }, "sha512-FRgX9Y4ovuVbwjVtjQ4v5rygKgXU+SC1T+Lu3tgRt/STImY6GutVN40WmrgsIN3g1Gt6U5yLGd27YK9038Gjiw=="],
 
-    "@chernabog/sdk": ["@chernabog/sdk@0.12.0", "", { "peerDependencies": { "@chernabog/core": "^1.0.0", "effect": "4.0.5" } }, "sha512-q9MoLAnNSRi1sTWBHqK8GLe8YUPgMCMDHHgCA8usVcd30EztWQ3Lmbyu1KlQ1eMsN7ME+4gu20iucWA6e2/3Mw=="],
+    "@chernabog/sdk": ["@chernabog/sdk@0.13.0", "", { "peerDependencies": { "@chernabog/core": "^1.0.0", "effect": "4.0.5" } }, "sha512-YmjrQkPcTGpCO6/7UGHxQpXL1fV/r14JpzJlG8SOk8Y2mXJi/A31CK6seYZgdo2q2GXUNby4Yp6HPU/X24Sdbw=="],
 
     "effect": ["effect@4.0.5", "", {}, "sha512-BY4/28NlpOd99yzmV741xbVGmp+1U7tks4oB7F/Png64bTa5tm5eCA6W0RiXsnuLDDoJpjfVSo4Dnq4BZb/89Q=="],
   }
