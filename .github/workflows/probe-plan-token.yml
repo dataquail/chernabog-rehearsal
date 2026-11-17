@@ -1,0 +1,35 @@
+# Temporary probe for dataquail/chernabog#477: can the plan job reserve with GITHUB_TOKEN? Removed afterwards.
+name: probe-plan-token
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+  checks: read
+  actions: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - run: |
+          set -u
+          EMPTY=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+          say() { echo "PROBE $*"; }
+          call() { local out; out=$(gh api "$@" 2>&1); say "exit=$? $1 $2 -> $(echo "$out" | tr -d '\n' | head -c 200)"; }
+          C1=$(gh api repos/$R/git/commits -f message="probe claim" -f tree=$EMPTY --jq .sha); say "commit C1=$C1"
+          call -X POST repos/$R/git/refs -f ref=refs/chernabog/claims/probe-gt -f sha=$C1
+          call -X POST repos/$R/git/refs -f ref=refs/chernabog/claims/probe-gt -f sha=$C1
+          C2=$(gh api repos/$R/git/commits -f message="probe takeover" -f tree=$EMPTY -f "parents[]=$C1" --jq .sha); say "commit C2=$C2"
+          call -X POST repos/$R/git/refs -f ref=refs/chernabog/leases/probe-gt/$C1 -f sha=$C2
+          call -X PATCH repos/$R/git/refs/chernabog/claims/probe-gt -f sha=$C2 -F force=true
+          call -X DELETE repos/$R/git/refs/chernabog/leases/probe-gt/$C1
+          call -X DELETE repos/$R/git/refs/chernabog/claims/probe-gt
+          call -X POST repos/$R/git/refs -f ref=refs/chernabog/claims/probe-gt-handoff -f sha=$C1
+          call -X POST repos/$R/git/refs -f ref=refs/heads/probe-gt-branch -f sha=$C1
+          call user
+          gh api rate_limit --jq '"PROBE rate core=\(.resources.core.limit) used=\(.resources.core.used) search=\(.resources.search.limit) graphql=\(.resources.graphql.limit)"'
+          call "search/issues?q=repo:$R+is:pr+is:open" --jq .total_count
